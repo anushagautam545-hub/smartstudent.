@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Student Expense Tracker</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <div class="logo-text">
+        <span class="logo-title">SmartStudent</span>
+        <span class="logo-subtitle">Expense Tracker</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul>
+      <li>
+        <a href="#" class="nav-link active" data-page="dashboard">
+          <i class="fas fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link" data-page="add-expense">
+          <i class="fas fa-plus-circle"></i>
+          <span>Add Expense</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link" data-page="history">
+          <i class="fas fa-history"></i>
+          <span>Expense History</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link" data-page="charts">
+          <i class="fas fa-chart-bar"></i>
+          <span>Charts</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link" data-page="budget">
+          <i class="fas fa-wallet"></i>
+          <span>Budget</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar"><i class="fas fa-user-graduate"></i></div>
+      <div class="user-info">
+        <span class="user-name">Student</span>
+        <span class="user-role">Personal Finance</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════ OVERLAY (mobile) ══════════════════ -->
+<div class="overlay" id="overlay"></div>
+
+<!-- ══════════════════ MAIN CONTENT ══════════════════ -->
+<main class="main-content" id="main-content">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburger" aria-label="Toggle sidebar">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-title-wrap">
+        <h1 class="page-title" id="page-title">Dashboard</h1>
+        <span class="page-subtitle" id="page-subtitle">Overview of your finances</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="current-date" id="current-date"></div>
+      <button class="btn btn-primary btn-sm" onclick="navigateTo('add-expense')">
+        <i class="fas fa-plus"></i> Add Expense
+      </button>
+    </div>
+  </header>
+
+  <!-- ── PAGE: DASHBOARD ── -->
+  <section class="page active" id="page-dashboard">
+    <!-- Summary Cards -->
+    <div class="cards-grid">
+      <div class="card stat-card card-green">
+        <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Monthly Budget</span>
+          <span class="stat-value" id="dash-budget">₹0</span>
+        </div>
+        <div class="stat-badge">This Month</div>
+      </div>
+      <div class="card stat-card card-blue">
+        <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Spent This Month</span>
+          <span class="stat-value" id="dash-monthly">₹0</span>
+        </div>
+        <div class="stat-badge">Month</div>
+      </div>
+      <div class="card stat-card card-orange" id="remaining-card">
+        <div class="stat-icon"><i class="fas fa-piggy-bank"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Remaining Budget</span>
+          <span class="stat-value" id="dash-remaining">₹0</span>
+        </div>
+        <div class="stat-badge">Available</div>
+      </div>
+      <div class="card stat-card card-purple">
+        <div class="stat-icon"><i class="fas fa-coins"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Total Expenses</span>
+          <span class="stat-value" id="dash-total">₹0</span>
+        </div>
+        <div class="stat-badge" id="dash-count">0 entries</div>
+      </div>
+    </div>
+
+    <!-- Budget Progress -->
+    <div class="card budget-progress-card">
+      <div class="card-header-row">
+        <h3><i class="fas fa-tasks"></i> Budget Usage</h3>
+        <span class="progress-label" id="progress-label">0%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <p class="progress-hint" id="progress-hint">Loading budget data…</p>
+    </div>
+
+    <!-- Recent Expenses + Mini Pie -->
+    <div class="dashboard-bottom">
+      <div class="card recent-card">
+        <div class="card-header-row">
+          <h3><i class="fas fa-clock"></i> Recent Expenses</h3>
+          <a href="#" onclick="navigateTo('history')" class="see-all">See All</a>
+        </div>
+        <div class="recent-list" id="recent-list">
+          <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <p>No expenses yet. <a href="#" onclick="navigateTo('add-expense')">Add one!</a></p>
+          </div>
+        </div>
+      </div>
+      <div class="card mini-chart-card">
+        <div class="card-header-row">
+          <h3><i class="fas fa-chart-pie"></i> This Month</h3>
+        </div>
+        <div class="mini-chart-wrap" id="dash-pie-wrap">
+          <canvas id="dash-pie-chart"></canvas>
+        </div>
+        <div class="chart-legend" id="dash-legend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PAGE: ADD EXPENSE ── -->
+  <section class="page" id="page-add-expense">
+    <div class="form-container">
+      <div class="card form-card">
+        <div class="form-card-header">
+          <div class="form-icon"><i class="fas fa-plus-circle"></i></div>
+          <div>
+            <h2 id="form-heading">Add New Expense</h2>
+            <p id="form-subheading">Fill in the details below to record your expense</p>
+          </div>
+        </div>
+
+        <form id="expense-form" novalidate>
+          <input type="hidden" id="expense-id" value="" />
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-amount"><i class="fas fa-indian-rupee-sign"></i> Amount (₹)</label>
+              <input type="number" id="f-amount" placeholder="e.g. 250" min="0.01" step="0.01" required />
+              <span class="field-error" id="err-amount"></span>
+            </div>
+            <div class="form-group">
+              <label for="f-category"><i class="fas fa-tag"></i> Category</label>
+              <select id="f-category" required>
+                <option value="">— Select category —</option>
+              </select>
+              <span class="field-error" id="err-category"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-date"><i class="fas fa-calendar-alt"></i> Date</label>
+              <input type="date" id="f-date" required />
+              <span class="field-error" id="err-date"></span>
+            </div>
+            <div class="form-group">
+              <label for="f-description"><i class="fas fa-pen"></i> Description</label>
+              <input type="text" id="f-description" placeholder="e.g. Lunch at canteen" maxlength="200" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" id="form-cancel-btn" style="display:none" onclick="resetForm()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn">
+              <i class="fas fa-save"></i> Save Expense
+            </button>
+          </div>
+
+          <div class="form-feedback" id="form-feedback"></div>
+        </form>
+      </div>
+
+      <!-- Quick Tips -->
+      <div class="tips-card card">
+        <h4><i class="fas fa-lightbulb"></i> Quick Tips</h4>
+        <ul>
+          <li>Record expenses as soon as you make them for accuracy.</li>
+          <li>Use descriptions to remember what each expense was for.</li>
+          <li>Check your dashboard regularly to stay within budget.</li>
+          <li>Set a realistic monthly budget on the Budget page.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PAGE: EXPENSE HISTORY ── -->
+  <section class="page" id="page-history">
+    <!-- Filter Bar -->
+    <div class="card filter-card">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label><i class="fas fa-tag"></i> Category</label>
+          <select id="filter-category">
+            <option value="All">All Categories</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label><i class="fas fa-calendar"></i> From</label>
+          <input type="date" id="filter-start" />
+        </div>
+        <div class="filter-group">
+          <label><i class="fas fa-calendar"></i> To</label>
+          <input type="date" id="filter-end" />
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" onclick="applyFilters()">
+            <i class="fas fa-search"></i> Filter
+          </button>
+          <button class="btn btn-ghost" onclick="clearFilters()">
+            <i class="fas fa-times"></i> Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card table-card">
+      <div class="card-header-row">
+        <h3><i class="fas fa-list"></i> All Expenses <span class="count-badge" id="history-count">0</span></h3>
+        <div class="table-total">Total: <strong id="history-total">₹0</strong></div>
+      </div>
+      <div class="table-wrap">
+        <table class="expense-table" id="expense-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="expense-tbody">
+            <tr>
+              <td colspan="6" class="empty-row">
+                <i class="fas fa-inbox"></i> No expenses found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PAGE: CHARTS ── -->
+  <section class="page" id="page-charts">
+    <div class="charts-grid">
+      <div class="card chart-card">
+        <div class="card-header-row">
+          <h3><i class="fas fa-chart-pie"></i> Expenses by Category</h3>
+          <span class="chart-hint">Current month</span>
+        </div>
+        <div class="chart-wrap" id="category-chart-wrap">
+          <canvas id="category-chart"></canvas>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <div class="card-header-row">
+          <h3><i class="fas fa-chart-bar"></i> Monthly Spending</h3>
+          <span class="chart-hint">Last 6 months</span>
+        </div>
+        <div class="chart-wrap" id="monthly-chart-wrap">
+          <canvas id="monthly-chart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="card chart-summary-card" id="chart-summary">
+      <h3><i class="fas fa-trophy"></i> Top Spending Categories This Month</h3>
+      <div class="top-categories" id="top-categories"></div>
+    </div>
+  </section>
+
+  <!-- ── PAGE: BUDGET ── -->
+  <section class="page" id="page-budget">
+    <div class="budget-container">
+      <div class="card budget-card">
+        <div class="form-card-header">
+          <div class="form-icon form-icon-orange"><i class="fas fa-wallet"></i></div>
+          <div>
+            <h2>Monthly Budget</h2>
+            <p>Set your spending limit for the month</p>
+          </div>
+        </div>
+
+        <div class="budget-current">
+          <span class="budget-current-label">Current Budget</span>
+          <span class="budget-current-value" id="current-budget-display">₹5,000</span>
+        </div>
+
+        <form id="budget-form" novalidate>
+          <div class="form-group">
+            <label for="b-amount"><i class="fas fa-indian-rupee-sign"></i> New Monthly Budget (₹)</label>
+            <input type="number" id="b-amount" placeholder="e.g. 8000" min="1" step="1" required />
+            <span class="field-error" id="err-budget"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-check"></i> Update Budget
+          </button>
+          <div class="form-feedback" id="budget-feedback"></div>
+        </form>
+      </div>
+
+      <!-- Budget Stats -->
+      <div class="card budget-stats-card">
+        <h3><i class="fas fa-chart-line"></i> This Month's Overview</h3>
+        <div class="budget-stats-grid">
+          <div class="bstat">
+            <span class="bstat-label">Budget</span>
+            <span class="bstat-value green" id="bstat-budget">₹0</span>
+          </div>
+          <div class="bstat">
+            <span class="bstat-label">Spent</span>
+            <span class="bstat-value red" id="bstat-spent">₹0</span>
+          </div>
+          <div class="bstat">
+            <span class="bstat-label">Remaining</span>
+            <span class="bstat-value" id="bstat-remaining">₹0</span>
+          </div>
+          <div class="bstat">
+            <span class="bstat-label">Usage</span>
+            <span class="bstat-value" id="bstat-usage">0%</span>
+          </div>
+        </div>
+        <div class="progress-bar-track" style="margin-top:1rem">
+          <div class="progress-bar-fill" id="budget-progress-fill"></div>
+        </div>
+        <p class="progress-hint" id="budget-progress-hint"></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════ EDIT MODAL ══════════════════ -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="edit-modal">
+    <div class="modal-header">
+      <h3><i class="fas fa-edit"></i> Edit Expense</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="edit-form" novalidate>
+        <input type="hidden" id="edit-id" />
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-indian-rupee-sign"></i> Amount (₹)</label>
+            <input type="number" id="edit-amount" min="0.01" step="0.01" required />
+            <span class="field-error" id="edit-err-amount"></span>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-tag"></i> Category</label>
+            <select id="edit-category" required>
+              <option value="">— Select —</option>
+            </select>
+            <span class="field-error" id="edit-err-category"></span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-calendar-alt"></i> Date</label>
+            <input type="date" id="edit-date" required />
+            <span class="field-error" id="edit-err-date"></span>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-pen"></i> Description</label>
+            <input type="text" id="edit-description" maxlength="200" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update</button>
+        </div>
+        <div class="form-feedback" id="edit-feedback"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ DELETE CONFIRM MODAL ══════════════════ -->
+<div class="modal-backdrop" id="delete-backdrop">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3><i class="fas fa-trash"></i> Confirm Delete</h3>
+      <button class="modal-close" onclick="closeDeleteModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="delete-confirm-text">Are you sure you want to delete this expense? This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirm-delete-btn">
+          <i class="fas fa-trash"></i> Yes, Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TOAST NOTIFICATION ══════════════════ -->
+<div class="toast" id="toast">
+  <i class="toast-icon fas fa-check-circle"></i>
+  <span class="toast-message" id="toast-message">Success!</span>
+</div>
+
+<!-- Scripts -->
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/app.js"></script>
+
+</body>
+</html>
